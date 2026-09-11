@@ -3,7 +3,9 @@
     <v-toolbar class="topbar" density="comfortable" elevation="0">
       <div class="brand-block"><v-avatar class="brand-mark" size="42">FF</v-avatar><div><div class="eyebrow">FastForward Logistics</div><h1>Ops Dashboard</h1></div></div>
       <div class="filter-row">
-        <v-btn-toggle v-model="filters.dateRange" mandatory color="amber-darken-2" density="compact" variant="outlined"><v-btn v-for="range in dateRanges" :key="range.value" :value="range.value">{{ range.label }}</v-btn></v-btn-toggle>
+        <div class="header-duration" role="group" aria-label="Dashboard date range">
+          <v-chip v-for="range in dateRanges" :key="range.value" :class="{ 'duration-chip-active': filters.dateRange === range.value }" class="duration-chip" pill variant="outlined" tabindex="0" @click="filters.dateRange = range.value" @keydown.enter.prevent="filters.dateRange = range.value" @keydown.space.prevent="filters.dateRange = range.value">{{ range.label }}</v-chip>
+        </div>
         <v-select v-model="filters.region" :items="regionOptions" aria-label="Region filter" class="header-select" density="compact" hide-details variant="solo-filled" />
         <v-select v-model="filters.carrier" :items="carrierOptions" aria-label="Carrier filter" class="header-select carrier-select" density="compact" hide-details variant="solo-filled" />
         <v-select v-model="filters.status" :items="statusOptions" aria-label="Shipment status filter" class="header-select" density="compact" hide-details variant="solo-filled" />
@@ -20,15 +22,15 @@
           <tbody><tr v-for="carrier in sortedScorecard" :key="carrier.carrierId" :class="{ 'low-score': carrier.compositeScore < 70 }"><td>{{ carrier.rank }}</td><td>{{ carrier.carrierName }}</td><td>{{ carrier.shipments.toLocaleString() }}</td><td><span class="status-pill" :class="getStatusTone(carrier.onTimeRate)">{{ formatPercent(carrier.onTimeRate) }}</span></td><td><span class="status-pill" :class="getExceptionTone(carrier.exceptionRate)">{{ formatPercent(carrier.exceptionRate) }}</span></td><td><span class="status-pill" :class="getCostTone(carrier.costVariance)">{{ formatVariance(carrier.costVariance) }}</span></td><td><span class="score-badge" :class="getScoreTone(carrier.compositeScore)">{{ carrier.compositeScore.toFixed(1) }}</span></td><td>{{ carrier.compositeScore >= 80 ? '↑' : '↓' }}</td></tr></tbody>
         </v-table>
       </v-card>
-      <v-card class="panel trend-panel" elevation="0"><v-card-title class="panel-header stacked-header"><h2>Exception Trend</h2><v-btn-toggle v-model="trendView" mandatory color="amber-darken-2" density="compact" variant="outlined"><v-btn value="type">By Exception Type</v-btn><v-btn value="carrier">By Carrier</v-btn></v-btn-toggle></v-card-title>
-        <v-btn-toggle v-model="trendMetric" mandatory color="amber-darken-2" class="metric-toggle" density="compact" variant="outlined"><v-btn value="count">Count</v-btn><v-btn value="percent">% of Shipments</v-btn></v-btn-toggle>
+      <v-card class="panel trend-panel" elevation="0"><v-card-title class="panel-header stacked-header"><h2>Exception Trend</h2><v-btn-toggle v-model="trendView" class="chart-toggle" mandatory color="amber-darken-2" density="compact" variant="outlined"><v-btn value="type">By Exception Type</v-btn><v-btn value="carrier">By Carrier</v-btn></v-btn-toggle></v-card-title>
+        <v-btn-toggle v-model="trendMetric" mandatory color="amber-darken-2" class="chart-toggle metric-toggle" density="compact" variant="outlined"><v-btn value="count">Count</v-btn><v-btn value="percent">% of Shipments</v-btn></v-btn-toggle>
         <div class="bar-chart"><div v-for="point in trendData" :key="point.label" class="bar-group"><div class="stacked-bars"><span class="bar late" :style="{ height: barHeight(point.late) }" /><span class="bar docs" :style="{ height: barHeight(point.docs) }" /><span class="bar invoice" :style="{ height: barHeight(point.invoice) }" /></div><label>{{ point.label }}</label></div></div>
         <div class="legend-row"><span><i class="dot late" />Late Delivery</span><span><i class="dot docs" />Missing Documentation</span><span><i class="dot invoice" />Invoice Discrepancy</span></div>
       </v-card>
     </section>
 
     <section class="secondary-grid">
-      <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 140" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span></div></v-card-text></v-card>
+      <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 170" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.gap" class="volume-gap" /><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /><g class="volume-axis"><text v-for="point in volumeSeries" :key="point.label" :x="point.x" y="156" text-anchor="middle">{{ point.label }}</text></g></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span><span><i class="line-swatch delayed" />Delayed / late gap</span></div></v-card-text></v-card>
       <v-card class="panel regional-panel" elevation="0"><v-card-title class="panel-header"><h2>Regional Performance</h2><v-chip class="panel-tag" size="small">Worst first</v-chip></v-card-title><v-card-text><div class="regional-grid"><v-sheet v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)" border><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></v-sheet></div></v-card-text></v-card>
     </section>
 
@@ -74,16 +76,31 @@ const sortedExceptions = computed(() => [...filteredExceptions.value].sort((left
 const maximumTrendValue = computed(() => Math.max(1, ...trendData.value.flatMap((point) => [point.late, point.docs, point.invoice])))
 const barHeight = (value: number) => `${Math.max(8, (value / maximumTrendValue.value) * 100)}%`
 
-const volumePaths = computed(() => {
-  const data = Array.from({ length: 8 }, (_, index) => ({ total: 0, onTime: 0, index }))
+const volumeSeries = computed(() => {
+  const days = Number(filters.dateRange)
+  const formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+  const data = Array.from({ length: 8 }, (_, index) => {
+    const daysAgo = Math.floor((7 - index) * (days / 8))
+    const date = new Date()
+    date.setDate(date.getDate() - daysAgo)
+    return { total: 0, onTime: 0, index, label: formatter.format(date), x: 18 + index * 44 }
+  })
   filterShipments(shipments, filters).forEach((shipment) => {
-    const bucket = Math.min(7, Math.floor(((Date.now() - new Date(shipment.date_created).getTime()) / 86400000) / (Number(filters.dateRange) / 8)))
+    const daysAgo = (Date.now() - new Date(shipment.date_created).getTime()) / 86400000
+    const bucket = Math.max(0, Math.min(7, 7 - Math.floor(daysAgo / (days / 8))))
     data[bucket].total += 1
     if (shipment.actual_delivery && new Date(shipment.actual_delivery) <= new Date(shipment.estimated_delivery)) data[bucket].onTime += 1
   })
+  return data
+})
+
+const volumePaths = computed(() => {
+  const data = volumeSeries.value
   const maximum = Math.max(1, ...data.flatMap((point) => [point.total, point.onTime]))
-  const path = (key: 'total' | 'onTime') => data.map((point) => `${point.index ? 'L' : 'M'} ${18 + point.index * 44} ${118 - (point[key] / maximum) * 88}`).join(' ')
-  return { total: path('total'), onTime: path('onTime') }
+  const y = (value: number) => 126 - (value / maximum) * 96
+  const path = (key: 'total' | 'onTime') => data.map((point) => `${point.index ? 'L' : 'M'} ${point.x} ${y(point[key])}`).join(' ')
+  const gap = `${path('total')} L ${data[data.length - 1].x} ${y(data[data.length - 1].onTime)} ${data.slice().reverse().map((point) => `L ${point.x} ${y(point.onTime)}`).join(' ')} Z`
+  return { total: path('total'), onTime: path('onTime'), gap }
 })
 
 function compare(left: object, right: object, key: string, direction: 'asc' | 'desc') { const result = typeof Reflect.get(left, key) === 'number' && typeof Reflect.get(right, key) === 'number' ? Number(Reflect.get(left, key)) - Number(Reflect.get(right, key)) : String(Reflect.get(left, key)).localeCompare(String(Reflect.get(right, key))); return direction === 'asc' ? result : -result }
