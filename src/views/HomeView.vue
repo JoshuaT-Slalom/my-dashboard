@@ -33,10 +33,6 @@
       <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 170" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.gap" class="volume-gap" /><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /><g class="volume-axis"><text v-for="point in volumeSeries" :key="point.label" :x="point.x" y="156" text-anchor="middle">{{ point.label }}</text></g></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span><span><i class="line-swatch delayed" />Delayed / late gap</span></div></v-card-text></v-card>
       <v-card class="panel regional-panel" elevation="0"><v-card-title class="panel-header"><h2>Regional Performance</h2><v-chip class="panel-tag" size="small">Worst first</v-chip></v-card-title><v-card-text><div class="regional-grid"><v-sheet v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)" border><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></v-sheet></div></v-card-text></v-card>
     </section>
-
-    <v-card class="panel exceptions-panel" elevation="0"><v-card-title class="panel-header compact-header"><h2>Open Exceptions</h2><div class="inline-filters"><v-select v-model="exceptionType" :items="exceptionTypeOptions" aria-label="Exception type filter" density="compact" hide-details label="Type" variant="outlined" /><v-select v-model="exceptionCarrier" :items="carrierOptions" aria-label="Exception carrier filter" density="compact" hide-details label="Carrier" variant="outlined" /></div></v-card-title>
-      <v-table density="compact"><thead><tr><th v-for="column in exceptionColumns" :key="column.key"><v-btn class="sort-button" size="x-small" variant="text" @click="toggleExceptionSort(column.key)">{{ column.label }}<v-icon :icon="sortIcon(exceptionSort, column.key)" size="14" /></v-btn></th></tr></thead><tbody><tr v-for="exception in sortedExceptions" :key="exception.id"><td>{{ exception.id }}</td><td>{{ exception.type }}</td><td>{{ exception.carrier_name }}</td><td>{{ exception.route }}</td><td>{{ exception.shipment_id }}</td><td>{{ formatDate(exception.date_opened) }}</td><td><span :class="{ 'danger-days': exception.daysOpen > 5 }">{{ exception.daysOpen }}</span></td><td><v-chip :color="exception.status === 'Open' ? 'success' : 'warning'" size="x-small" variant="tonal">{{ exception.status }}</v-chip></td></tr><tr v-if="!sortedExceptions.length"><td colspan="8" class="empty-state">No open exceptions match the selected filters.</td></tr></tbody></v-table>
-    </v-card>
   </main>
 </template>
 
@@ -45,24 +41,18 @@ import { computed, reactive, ref } from 'vue'
 import { carriers } from '../data/carriers'
 import { exceptions } from '../data/exceptions'
 import { shipments } from '../data/shipments'
-import { filterShipments, formatPercent, formatVariance, getCarrierScorecard, getCostTone, getDurationLabel, getExceptionTrendData, getOpenExceptions, getRegionalSummary, getStatusTone, getSummaryMetrics, type FilterState } from '../utils/metrics'
+import { filterShipments, formatPercent, formatVariance, getCarrierScorecard, getCostTone, getDurationLabel, getExceptionTrendData, getRegionalSummary, getStatusTone, getSummaryMetrics, type FilterState } from '../utils/metrics'
 
 const filters = reactive<FilterState>({ dateRange: '30', region: 'all', carrier: 'all', status: 'all' })
 const dateRanges = [{ label: 'Last 7 days', value: '7' }, { label: 'Last 30 days', value: '30' }, { label: 'Last 90 days', value: '90' }]
 const regions = ['Northeast', 'Southeast', 'Midwest', 'West', 'Southwest']
-const exceptionTypes = ['Late Delivery', 'Missing Documentation', 'Invoice Discrepancy']
 const regionOptions = [{ title: 'All Regions', value: 'all' }, ...regions.map((region) => ({ title: region, value: region }))]
 const carrierOptions = [{ title: 'All Carriers', value: 'all' }, ...carriers.map((carrier) => ({ title: carrier.name, value: carrier.id }))]
 const statusOptions = [{ title: 'All Shipment Statuses', value: 'all' }, { title: 'In Transit', value: 'In Transit' }, { title: 'Delivered', value: 'Delivered' }, { title: 'Delayed', value: 'Delayed' }]
-const exceptionTypeOptions = [{ title: 'All Types', value: 'all' }, ...exceptionTypes.map((type) => ({ title: type, value: type }))]
 const trendView = ref<'type' | 'carrier'>('type')
 const trendMetric = ref<'count' | 'percent'>('count')
-const exceptionType = ref('all')
-const exceptionCarrier = ref('all')
 const scoreSort = reactive({ key: 'compositeScore', direction: 'desc' as 'asc' | 'desc' })
-const exceptionSort = reactive({ key: 'daysOpen', direction: 'desc' as 'asc' | 'desc' })
 const scoreColumns = [{ key: 'rank', label: 'Rank' }, { key: 'carrierName', label: 'Carrier' }, { key: 'shipments', label: 'Shipments' }, { key: 'onTimeRate', label: 'On-Time' }, { key: 'exceptionRate', label: 'Exception' }, { key: 'costVariance', label: 'Cost vs. Contract' }, { key: 'compositeScore', label: 'Composite' }, { key: 'trend', label: 'Trend' }]
-const exceptionColumns = [{ key: 'id', label: 'Exception ID' }, { key: 'type', label: 'Type' }, { key: 'carrier_name', label: 'Carrier' }, { key: 'route', label: 'Route' }, { key: 'shipment_id', label: 'Shipment #' }, { key: 'date_opened', label: 'Date Opened' }, { key: 'daysOpen', label: 'Days Open' }, { key: 'status', label: 'Status' }]
 
 const summary = computed(() => getSummaryMetrics(shipments, exceptions, filters))
 const durationLabel = computed(() => getDurationLabel(Number(filters.dateRange)))
@@ -71,8 +61,6 @@ const scorecard = computed(() => getCarrierScorecard(shipments, exceptions, filt
 const sortedScorecard = computed(() => [...scorecard.value].sort((left, right) => compare(left, right, scoreSort.key, scoreSort.direction)))
 const trendData = computed(() => getExceptionTrendData(shipments, exceptions, filters, trendView.value, trendMetric.value))
 const regionalSummary = computed(() => getRegionalSummary(shipments, exceptions, filters))
-const filteredExceptions = computed(() => getOpenExceptions(shipments, exceptions, filters).filter((exception) => (exceptionType.value === 'all' || exception.type === exceptionType.value) && (exceptionCarrier.value === 'all' || exception.carrier_id === exceptionCarrier.value)))
-const sortedExceptions = computed(() => [...filteredExceptions.value].sort((left, right) => compare(left, right, exceptionSort.key, exceptionSort.direction)))
 const maximumTrendValue = computed(() => Math.max(1, ...trendData.value.flatMap((point) => [point.late, point.docs, point.invoice])))
 const barHeight = (value: number) => `${Math.max(8, (value / maximumTrendValue.value) * 100)}%`
 
@@ -105,9 +93,7 @@ const volumePaths = computed(() => {
 
 function compare(left: object, right: object, key: string, direction: 'asc' | 'desc') { const result = typeof Reflect.get(left, key) === 'number' && typeof Reflect.get(right, key) === 'number' ? Number(Reflect.get(left, key)) - Number(Reflect.get(right, key)) : String(Reflect.get(left, key)).localeCompare(String(Reflect.get(right, key))); return direction === 'asc' ? result : -result }
 function toggleScoreSort(key: string) { scoreSort.direction = scoreSort.key === key && scoreSort.direction === 'desc' ? 'asc' : 'desc'; scoreSort.key = key }
-function toggleExceptionSort(key: string) { exceptionSort.direction = exceptionSort.key === key && exceptionSort.direction === 'desc' ? 'asc' : 'desc'; exceptionSort.key = key }
 function sortIcon(sort: { key: string; direction: string }, key: string) { return sort.key !== key ? 'mdi-swap-vertical' : sort.direction === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }
 function getExceptionTone(value: number) { return value <= 10 ? 'good' : value <= 20 ? 'warn' : 'bad' }
 function getScoreTone(value: number) { return value >= 90 ? 'excellent' : value >= 70 ? 'good' : 'alert' }
-function formatDate(value: string) { return new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(value)) }
 </script>
