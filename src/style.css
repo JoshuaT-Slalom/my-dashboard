@@ -578,6 +578,7 @@ tr.low-score {
   display: flex;
   flex-wrap: wrap;
   gap: 18px;
+  justify-content: center;
   border-top: 1px solid #edf2f7;
   padding-top: 12px;
   color: #4e6478;
@@ -645,7 +646,9 @@ tr.low-score {
 
 .chart-legend {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
+  justify-content: center;
   margin-top: 12px;
   color: #4e6478;
   font-size: 12px;
