@@ -26,7 +26,7 @@
     </v-sheet>
 
     <section class="summary-grid">
-      <v-card v-for="card in summaryCards" :key="card.label" class="summary-card" elevation="0"><v-card-text><div class="card-label">{{ card.label }}</div><div class="card-value" :class="card.tone">{{ card.value }}</div><div class="card-trend" :class="card.trend >= 0 ? 'positive' : 'negative'"><v-icon :icon="card.trend >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'" size="15" />{{ Math.abs(card.trend).toFixed(1) }}% vs prior period</div></v-card-text></v-card>
+      <MetricCard v-for="card in summaryCards" :key="card.label" :label="card.label" :trend-direction="card.trendDirection" :trend-text="card.trendText" :value="card.value" :value-color="card.valueColor" />
     </section>
 
     <section class="primary-grid">
@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import MetricCard from '../components/MetricCard.vue'
 import { carriers } from '../data/carriers'
 import { exceptions } from '../data/exceptions'
 import { shipments } from '../data/shipments'
@@ -69,7 +70,18 @@ const scoreColumns = [{ key: 'rank', label: 'Rank' }, { key: 'carrierName', labe
 
 const summary = computed(() => getSummaryMetrics(shipments, exceptions, filters))
 const durationLabel = computed(() => getDurationLabel(Number(filters.dateRange)))
-const summaryCards = computed(() => [{ label: 'Total Shipments', value: summary.value.totalShipments.toLocaleString(), trend: summary.value.trend.shipments, tone: '' }, { label: 'Network On-Time Rate', value: formatPercent(summary.value.onTimeRate), trend: summary.value.trend.onTime, tone: getStatusTone(summary.value.onTimeRate) }, { label: 'Open Exceptions', value: summary.value.openExceptions.toLocaleString(), trend: summary.value.trend.exceptions, tone: summary.value.openExceptions > 30 ? 'alert' : '' }, { label: 'Avg Cost vs. Contract', value: formatVariance(summary.value.costVariance), trend: summary.value.trend.cost, tone: getCostTone(summary.value.costVariance) }])
+const summaryCards = computed(() => {
+  const trendText = (trend: number) => `${Math.abs(trend).toFixed(1)}% vs prior period`
+  const trendDirection = (trend: number): 'up' | 'down' | 'neutral' => trend > 0 ? 'up' : trend < 0 ? 'down' : 'neutral'
+  const statusColor = (value: number) => getStatusTone(value) === 'good' ? '#10b981' : getStatusTone(value) === 'warn' ? '#f59e0b' : '#ef4444'
+
+  return [
+    { label: 'Total Shipments', value: summary.value.totalShipments.toLocaleString(), valueColor: '#0f2d4a', trendDirection: trendDirection(summary.value.trend.shipments), trendText: trendText(summary.value.trend.shipments) },
+    { label: 'Network On-Time Rate', value: formatPercent(summary.value.onTimeRate), valueColor: statusColor(summary.value.onTimeRate), trendDirection: trendDirection(summary.value.trend.onTime), trendText: trendText(summary.value.trend.onTime) },
+    { label: 'Open Exceptions', value: summary.value.openExceptions.toLocaleString(), valueColor: summary.value.openExceptions > 30 ? '#ef4444' : '#0f2d4a', trendDirection: trendDirection(summary.value.trend.exceptions), trendText: trendText(summary.value.trend.exceptions) },
+    { label: 'Avg Cost vs. Contract', value: formatVariance(summary.value.costVariance), valueColor: getCostTone(summary.value.costVariance) === 'good' ? '#10b981' : '#ef4444', trendDirection: trendDirection(summary.value.trend.cost), trendText: trendText(summary.value.trend.cost) },
+  ]
+})
 const scorecard = computed(() => getCarrierScorecard(shipments, exceptions, filters))
 const sortedScorecard = computed(() => [...scorecard.value].sort((left, right) => compare(left, right, scoreSort.key, scoreSort.direction)))
 const trendData = computed(() => getExceptionTrendData(shipments, exceptions, filters, trendView.value, trendMetric.value))
