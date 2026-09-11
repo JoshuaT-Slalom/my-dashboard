@@ -5,7 +5,7 @@
       <v-menu location="bottom end" offset="8">
         <template #activator="{ props }">
           <v-btn v-bind="props" class="ml-auto user-menu-button" rounded="pill" variant="text">
-            <v-avatar color="#F5A623" size="36"><span class="text-subtitle-2 font-weight-bold text-white">JT</span></v-avatar>
+            <v-avatar color="#F5A623" size="36"><span class="text-subtitle-2 font-weight-bold avatar-initials">JT</span></v-avatar>
             <span class="d-flex flex-column align-start user-menu-details"><span class="text-body-2 font-weight-medium text-white">Josh Thompson</span><span class="text-caption" style="color: rgba(255,255,255,0.5)">VP of Operations</span></span>
           </v-btn>
         </template>
@@ -17,7 +17,7 @@
       <div class="filter-navigation-label">Dashboard filters</div>
       <div class="filter-row">
         <div class="header-duration" role="group" aria-label="Dashboard date range">
-          <v-chip v-for="range in dateRanges" :key="range.value" :class="{ 'duration-chip-active': filters.dateRange === range.value }" class="duration-chip" pill variant="outlined" tabindex="0" @click="filters.dateRange = range.value" @keydown.enter.prevent="filters.dateRange = range.value" @keydown.space.prevent="filters.dateRange = range.value">{{ range.label }}</v-chip>
+          <v-chip v-for="range in dateRanges" :key="range.value" :class="{ 'duration-chip-active': filters.dateRange === range.value }" class="duration-chip" :color="filters.dateRange === range.value ? '#457B9D' : '#1D3557'" pill :variant="filters.dateRange === range.value ? 'tonal' : 'outlined'" tabindex="0" @click="filters.dateRange = range.value" @keydown.enter.prevent="filters.dateRange = range.value" @keydown.space.prevent="filters.dateRange = range.value">{{ range.label }}</v-chip>
         </div>
         <v-select v-model="filters.region" :items="regionOptions" aria-label="Region filter" class="header-select" density="compact" hide-details variant="solo-filled" />
         <v-select v-model="filters.carrier" :items="carrierOptions" aria-label="Carrier filter" class="header-select carrier-select" density="compact" hide-details variant="solo-filled" />
@@ -35,8 +35,8 @@
           <tbody><tr v-for="carrier in sortedScorecard" :key="carrier.carrierId" :class="{ 'low-score': carrier.compositeScore < 70 }"><td>{{ carrier.rank }}</td><td>{{ carrier.carrierName }}</td><td>{{ carrier.shipments.toLocaleString() }}</td><td><span class="status-pill" :class="getStatusTone(carrier.onTimeRate)">{{ formatPercent(carrier.onTimeRate) }}</span></td><td><span class="status-pill" :class="getExceptionTone(carrier.exceptionRate)">{{ formatPercent(carrier.exceptionRate) }}</span></td><td><span class="status-pill" :class="getCostTone(carrier.costVariance)">{{ formatVariance(carrier.costVariance) }}</span></td><td><span class="score-badge" :class="getScoreTone(carrier.compositeScore)">{{ carrier.compositeScore.toFixed(1) }}</span></td><td>{{ carrier.compositeScore >= 80 ? '↑' : '↓' }}</td></tr></tbody>
         </v-table>
       </v-card>
-      <v-card class="panel trend-panel" elevation="0"><v-card-title class="panel-header stacked-header"><h2>Exception Trend</h2><div class="trend-chip-group" role="group" aria-label="Exception trend grouping"><v-chip :class="{ 'trend-chip-active': trendView === 'type' }" class="trend-chip" pill @click="trendView = 'type'">By Exception Type</v-chip><v-chip :class="{ 'trend-chip-active': trendView === 'carrier' }" class="trend-chip" pill @click="trendView = 'carrier'">By Carrier</v-chip></div></v-card-title>
-        <div class="trend-chip-group metric-toggle" role="group" aria-label="Exception trend metric"><v-chip :class="{ 'trend-chip-active': trendMetric === 'count' }" class="trend-chip" pill @click="trendMetric = 'count'">Count</v-chip><v-chip :class="{ 'trend-chip-active': trendMetric === 'percent' }" class="trend-chip" pill @click="trendMetric = 'percent'">% of Shipments</v-chip></div>
+      <v-card class="panel trend-panel" elevation="0"><v-card-title class="panel-header stacked-header"><h2>Exception Trend</h2><div class="trend-chip-group" role="group" aria-label="Exception trend grouping"><v-chip :class="{ 'trend-chip-active': trendView === 'type' }" class="trend-chip" :color="trendView === 'type' ? '#457B9D' : '#1D3557'" pill :variant="trendView === 'type' ? 'tonal' : 'outlined'" @click="trendView = 'type'">By Exception Type</v-chip><v-chip :class="{ 'trend-chip-active': trendView === 'carrier' }" class="trend-chip" :color="trendView === 'carrier' ? '#457B9D' : '#1D3557'" pill :variant="trendView === 'carrier' ? 'tonal' : 'outlined'" @click="trendView = 'carrier'">By Carrier</v-chip></div></v-card-title>
+        <div class="trend-chip-group metric-toggle" role="group" aria-label="Exception trend metric"><v-chip :class="{ 'trend-chip-active': trendMetric === 'count' }" class="trend-chip" :color="trendMetric === 'count' ? '#457B9D' : '#1D3557'" pill :variant="trendMetric === 'count' ? 'tonal' : 'outlined'" @click="trendMetric = 'count'">Count</v-chip><v-chip :class="{ 'trend-chip-active': trendMetric === 'percent' }" class="trend-chip" :color="trendMetric === 'percent' ? '#457B9D' : '#1D3557'" pill :variant="trendMetric === 'percent' ? 'tonal' : 'outlined'" @click="trendMetric = 'percent'">% of Shipments</v-chip></div>
         <div class="bar-chart"><div v-for="point in trendData" :key="point.label" class="bar-group"><div class="stacked-bars"><span class="bar late" :style="{ height: barHeight(point.late) }" /><span class="bar docs" :style="{ height: barHeight(point.docs) }" /><span class="bar invoice" :style="{ height: barHeight(point.invoice) }" /></div><label>{{ point.label }}</label></div></div>
         <div class="legend-row"><span><i class="dot late" />Late Delivery</span><span><i class="dot docs" />Missing Documentation</span><span><i class="dot invoice" />Invoice Discrepancy</span></div>
       </v-card>
@@ -73,13 +73,13 @@ const durationLabel = computed(() => getDurationLabel(Number(filters.dateRange))
 const summaryCards = computed(() => {
   const trendText = (trend: number) => `${Math.abs(trend).toFixed(1)}% vs prior period`
   const trendDirection = (trend: number): 'up' | 'down' | 'neutral' => trend > 0 ? 'up' : trend < 0 ? 'down' : 'neutral'
-  const statusColor = (value: number) => getStatusTone(value) === 'good' ? '#10b981' : getStatusTone(value) === 'warn' ? '#f59e0b' : '#ef4444'
+  const statusColor = (value: number) => getStatusTone(value) === 'good' ? '#147d73' : getStatusTone(value) === 'warn' ? '#9a6300' : '#c92e3c'
 
   return [
     { label: 'Total Shipments', value: summary.value.totalShipments.toLocaleString(), valueColor: '#0f2d4a', trendDirection: trendDirection(summary.value.trend.shipments), trendText: trendText(summary.value.trend.shipments) },
     { label: 'Network On-Time Rate', value: formatPercent(summary.value.onTimeRate), valueColor: statusColor(summary.value.onTimeRate), trendDirection: trendDirection(summary.value.trend.onTime), trendText: trendText(summary.value.trend.onTime) },
-    { label: 'Open Exceptions', value: summary.value.openExceptions.toLocaleString(), valueColor: summary.value.openExceptions > 30 ? '#ef4444' : '#0f2d4a', trendDirection: trendDirection(summary.value.trend.exceptions), trendText: trendText(summary.value.trend.exceptions) },
-    { label: 'Avg Cost vs. Contract', value: formatVariance(summary.value.costVariance), valueColor: getCostTone(summary.value.costVariance) === 'good' ? '#10b981' : '#ef4444', trendDirection: trendDirection(summary.value.trend.cost), trendText: trendText(summary.value.trend.cost) },
+    { label: 'Open Exceptions', value: summary.value.openExceptions.toLocaleString(), valueColor: summary.value.openExceptions > 30 ? '#c92e3c' : '#0f2d4a', trendDirection: trendDirection(summary.value.trend.exceptions), trendText: trendText(summary.value.trend.exceptions) },
+    { label: 'Avg Cost vs. Contract', value: formatVariance(summary.value.costVariance), valueColor: getCostTone(summary.value.costVariance) === 'good' ? '#147d73' : '#c92e3c', trendDirection: trendDirection(summary.value.trend.cost), trendText: trendText(summary.value.trend.cost) },
   ]
 })
 const scorecard = computed(() => getCarrierScorecard(shipments, exceptions, filters))

@@ -44,15 +44,38 @@ const trendColorClass = computed(() => ({
   min-height: 130px;
 }
 
+.metric-card :deep(.v-card-text) {
+  padding: 24px;
+}
+
 .metric-card__label {
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.08em;
 }
 
 .metric-card__value {
   margin-top: 18px;
+  font-size: 32px;
+  font-weight: 700;
 }
 
 .metric-card__trend {
   margin-top: 12px;
+}
+
+.metric-card__trend :deep(.text-caption) {
+  color: #4A5D79;
+  font-size: 12px;
+}
+
+.metric-card__trend.text-success :deep(.text-caption),
+.metric-card__trend.text-success :deep(.v-icon) {
+  color: #147d73 !important;
+}
+
+.metric-card__trend.text-error :deep(.text-caption),
+.metric-card__trend.text-error :deep(.v-icon) {
+  color: #c92e3c !important;
 }
 </style>
