@@ -336,7 +336,7 @@ p {
 }
 
 .secondary-grid {
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 0.8fr 1.2fr;
   margin-bottom: 16px;
 }
 
@@ -603,11 +603,15 @@ tr.low-score {
 
 .volume-chart {
   width: 100%;
-  height: 160px;
+  height: 220px;
   display: block;
   background: linear-gradient(180deg, #f7fafc 0%, #f3f8ff 100%);
   border-radius: 10px;
   border: 1px solid #edf2f7;
+}
+
+.volume-panel .v-card-text {
+  padding: 12px 0 0;
 }
 
 .volume-line {
@@ -626,6 +630,16 @@ tr.low-score {
 
 .volume-axis text {
   fill: #5e7287;
+  font-size: 8px;
+}
+
+.volume-grid line {
+  stroke: #dfe8e2;
+  stroke-width: 1;
+}
+
+.volume-grid text {
+  fill: var(--color-slate);
   font-size: 8px;
 }
 
@@ -710,8 +724,7 @@ tr.low-score {
 
 @media (max-width: 1200px) {
   .summary-grid,
-  .primary-grid,
-  .secondary-grid {
+  .primary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -730,5 +743,11 @@ tr.low-score {
 
   .header-duration {
     margin-left: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .secondary-grid {
+    grid-template-columns: 1fr;
   }
 }

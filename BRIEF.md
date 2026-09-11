@@ -143,7 +143,9 @@ Shows the VP how exceptions are trending over time and which exception types are
 
 - **Line chart** showing total shipments per day or week (depending on date range filter)
 - A second line overlaid showing on-time shipments
-- The gap between total and on-time = late/delayed, which should be a shaded area in a muted red/orange
+- Include a **Delayed** data series containing the count of shipments with a `Delayed` status for each chart interval. Render it as a muted red/orange related data point or line, alongside the total and on-time series.
+- The difference between total and on-time shipments may also be shown as a subtle muted red/orange shaded area to provide additional context.
+- **Y axis:** show five evenly spaced, data-driven shipment-count ticks from zero to a rounded maximum for the selected date range. Include subtle horizontal grid lines so leadership can quickly compare volume levels.
 
 ---
 

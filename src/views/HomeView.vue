@@ -42,8 +42,8 @@
     </section>
 
     <section class="secondary-grid">
-      <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 170" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.gap" class="volume-gap" /><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /><g class="volume-axis"><text v-for="point in volumeSeries" :key="point.label" :x="point.x" y="156" text-anchor="middle">{{ point.label }}</text></g></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span><span><i class="line-swatch delayed" />Delayed / late gap</span></div></v-card-text></v-card>
-      <v-card class="panel regional-panel" elevation="0"><v-card-title class="panel-header"><h2>Regional Performance</h2><v-chip class="panel-tag" size="small">Worst first</v-chip></v-card-title><v-card-text><div class="regional-grid"><v-sheet v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)" border><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></v-sheet></div></v-card-text></v-card>
+      <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 170" class="volume-chart" aria-label="Shipment volume chart" preserveAspectRatio="none" role="img"><g class="volume-grid"><line v-for="tick in volumeAxis.ticks" :key="tick.value" x1="42" :y1="tick.y" x2="342" :y2="tick.y" /><text v-for="tick in volumeAxis.ticks" :key="`label-${tick.value}`" x="34" :y="tick.y + 3" text-anchor="end">{{ tick.value }}</text></g><path :d="volumePaths.gap" class="volume-gap" /><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /><g class="volume-axis"><text v-for="point in volumeSeries" :key="point.label" :x="point.x" y="156" text-anchor="middle">{{ point.label }}</text></g></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span><span><i class="line-swatch delayed" />Delayed</span></div></v-card-text></v-card>
+      <v-card class="panel regional-panel" elevation="0"><v-card-title class="panel-header"><h2>Regional Performance</h2><v-chip class="panel-tag" size="small">Highest Need</v-chip></v-card-title><v-card-text><div class="regional-grid"><v-sheet v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)" border><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></v-sheet></div></v-card-text></v-card>
     </section>
   </main>
 </template>
@@ -95,7 +95,7 @@ const volumeSeries = computed(() => {
     const daysAgo = Math.floor((7 - index) * (days / 8))
     const date = new Date()
     date.setDate(date.getDate() - daysAgo)
-    return { total: 0, onTime: 0, index, label: formatter.format(date), x: 18 + index * 44 }
+    return { total: 0, onTime: 0, index, label: formatter.format(date), x: 42 + index * (300 / 7) }
   })
   filterShipments(shipments, filters).forEach((shipment) => {
     const daysAgo = (Date.now() - new Date(shipment.date_created).getTime()) / 86400000
@@ -108,11 +108,20 @@ const volumeSeries = computed(() => {
 
 const volumePaths = computed(() => {
   const data = volumeSeries.value
-  const maximum = Math.max(1, ...data.flatMap((point) => [point.total, point.onTime]))
-  const y = (value: number) => 126 - (value / maximum) * 96
+  const y = (value: number) => 126 - (value / volumeAxis.value.maximum) * 96
   const path = (key: 'total' | 'onTime') => data.map((point) => `${point.index ? 'L' : 'M'} ${point.x} ${y(point[key])}`).join(' ')
   const gap = `${path('total')} L ${data[data.length - 1].x} ${y(data[data.length - 1].onTime)} ${data.slice().reverse().map((point) => `L ${point.x} ${y(point.onTime)}`).join(' ')} Z`
   return { total: path('total'), onTime: path('onTime'), gap }
+})
+
+const volumeAxis = computed(() => {
+  const observedMaximum = Math.max(1, ...volumeSeries.value.flatMap((point) => [point.total, point.onTime]))
+  const step = Math.max(1, Math.ceil(observedMaximum / 4))
+  const maximum = step * 4
+  return {
+    maximum,
+    ticks: Array.from({ length: 5 }, (_, index) => ({ value: maximum - index * step, y: 30 + index * 24 })),
+  }
 })
 
 function compare(left: object, right: object, key: string, direction: 'asc' | 'desc') { const result = typeof Reflect.get(left, key) === 'number' && typeof Reflect.get(right, key) === 'number' ? Number(Reflect.get(left, key)) - Number(Reflect.get(right, key)) : String(Reflect.get(left, key)).localeCompare(String(Reflect.get(right, key))); return direction === 'asc' ? result : -result }
