@@ -60,6 +60,12 @@ p {
   color: #ecf3ff;
 }
 
+.topbar .v-toolbar__content {
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 24px;
+}
+
 .brand-block {
   display: flex;
   align-items: center;
@@ -96,6 +102,24 @@ p {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.header-select {
+  width: 156px;
+}
+
+.carrier-select {
+  width: 210px;
+}
+
+.header-select .v-field {
+  background: rgba(6, 23, 36, 0.3);
+  color: #ecf3ff;
+}
+
+.header-select .v-field__input,
+.header-select .v-field__append-inner .v-icon {
+  color: #ecf3ff;
 }
 
 .filter-row select,
@@ -454,6 +478,21 @@ tr.low-score {
 
 .compact-header {
   margin-bottom: 8px;
+}
+
+.sort-button {
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px;
+  color: #5e7287;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  color: #5e7287;
 }
 
 .inline-filters {

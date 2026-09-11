@@ -1,40 +1,40 @@
 <template>
   <main class="page-shell">
-    <header class="topbar">
-      <div class="brand-block"><div class="brand-mark">FF</div><div><div class="eyebrow">FastForward Logistics</div><h1>Ops Dashboard</h1></div></div>
+    <v-toolbar class="topbar" density="comfortable" elevation="0">
+      <div class="brand-block"><v-avatar class="brand-mark" size="42">FF</v-avatar><div><div class="eyebrow">FastForward Logistics</div><h1>Ops Dashboard</h1></div></div>
       <div class="filter-row">
-        <button v-for="range in dateRanges" :key="range.value" type="button" class="filter-chip" :class="{ active: filters.dateRange === range.value }" @click="filters.dateRange = range.value">{{ range.label }}</button>
-        <select v-model="filters.region" aria-label="Region filter"><option value="all">All Regions</option><option v-for="region in regions" :key="region">{{ region }}</option></select>
-        <select v-model="filters.carrier" aria-label="Carrier filter"><option value="all">All Carriers</option><option v-for="carrier in carriers" :key="carrier.id" :value="carrier.id">{{ carrier.name }}</option></select>
-        <select v-model="filters.status" aria-label="Shipment status filter"><option value="all">All Shipment Status</option><option value="In Transit">In Transit</option><option value="Delivered">Delivered</option><option value="Delayed">Delayed</option></select>
+        <v-btn-toggle v-model="filters.dateRange" mandatory color="amber-darken-2" density="compact" variant="outlined"><v-btn v-for="range in dateRanges" :key="range.value" :value="range.value">{{ range.label }}</v-btn></v-btn-toggle>
+        <v-select v-model="filters.region" :items="regionOptions" aria-label="Region filter" class="header-select" density="compact" hide-details variant="solo-filled" />
+        <v-select v-model="filters.carrier" :items="carrierOptions" aria-label="Carrier filter" class="header-select carrier-select" density="compact" hide-details variant="solo-filled" />
+        <v-select v-model="filters.status" :items="statusOptions" aria-label="Shipment status filter" class="header-select" density="compact" hide-details variant="solo-filled" />
       </div>
-    </header>
+    </v-toolbar>
 
     <section class="summary-grid">
-      <article v-for="card in summaryCards" :key="card.label" class="summary-card"><div class="card-label">{{ card.label }}</div><div class="card-value" :class="card.tone">{{ card.value }}</div><div class="card-trend" :class="card.trend >= 0 ? 'positive' : 'negative'">{{ card.trend >= 0 ? '↑' : '↓' }} {{ Math.abs(card.trend).toFixed(1) }}% vs prior period</div></article>
+      <v-card v-for="card in summaryCards" :key="card.label" class="summary-card" elevation="0"><v-card-text><div class="card-label">{{ card.label }}</div><div class="card-value" :class="card.tone">{{ card.value }}</div><div class="card-trend" :class="card.trend >= 0 ? 'positive' : 'negative'"><v-icon :icon="card.trend >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'" size="15" />{{ Math.abs(card.trend).toFixed(1) }}% vs prior period</div></v-card-text></v-card>
     </section>
 
     <section class="primary-grid">
-      <div class="panel table-panel"><div class="panel-header"><h2>Carrier Performance Scorecard</h2><span class="panel-tag">{{ durationLabel }}</span></div>
-        <table><thead><tr><th v-for="column in scoreColumns" :key="column.key"><button class="sort-button" type="button" @click="toggleScoreSort(column.key)">{{ column.label }} {{ sortIndicator(scoreSort, column.key) }}</button></th></tr></thead>
+      <v-card class="panel table-panel" elevation="0"><v-card-title class="panel-header"><h2>Carrier Performance Scorecard</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title>
+        <v-table density="compact"><thead><tr><th v-for="column in scoreColumns" :key="column.key"><v-btn class="sort-button" size="x-small" variant="text" @click="toggleScoreSort(column.key)">{{ column.label }}<v-icon :icon="sortIcon(scoreSort, column.key)" size="14" /></v-btn></th></tr></thead>
           <tbody><tr v-for="carrier in sortedScorecard" :key="carrier.carrierId" :class="{ 'low-score': carrier.compositeScore < 70 }"><td>{{ carrier.rank }}</td><td>{{ carrier.carrierName }}</td><td>{{ carrier.shipments.toLocaleString() }}</td><td><span class="status-pill" :class="getStatusTone(carrier.onTimeRate)">{{ formatPercent(carrier.onTimeRate) }}</span></td><td><span class="status-pill" :class="getExceptionTone(carrier.exceptionRate)">{{ formatPercent(carrier.exceptionRate) }}</span></td><td><span class="status-pill" :class="getCostTone(carrier.costVariance)">{{ formatVariance(carrier.costVariance) }}</span></td><td><span class="score-badge" :class="getScoreTone(carrier.compositeScore)">{{ carrier.compositeScore.toFixed(1) }}</span></td><td>{{ carrier.compositeScore >= 80 ? '↑' : '↓' }}</td></tr></tbody>
-        </table>
-      </div>
-      <div class="panel trend-panel"><div class="panel-header stacked-header"><h2>Exception Trend</h2><div class="segmented-control"><button type="button" :class="{ selected: trendView === 'type' }" @click="trendView = 'type'">By Exception Type</button><button type="button" :class="{ selected: trendView === 'carrier' }" @click="trendView = 'carrier'">By Carrier</button></div></div>
-        <div class="segmented-control metric-toggle"><button type="button" :class="{ selected: trendMetric === 'count' }" @click="trendMetric = 'count'">Count</button><button type="button" :class="{ selected: trendMetric === 'percent' }" @click="trendMetric = 'percent'">% of Shipments</button></div>
+        </v-table>
+      </v-card>
+      <v-card class="panel trend-panel" elevation="0"><v-card-title class="panel-header stacked-header"><h2>Exception Trend</h2><v-btn-toggle v-model="trendView" mandatory color="amber-darken-2" density="compact" variant="outlined"><v-btn value="type">By Exception Type</v-btn><v-btn value="carrier">By Carrier</v-btn></v-btn-toggle></v-card-title>
+        <v-btn-toggle v-model="trendMetric" mandatory color="amber-darken-2" class="metric-toggle" density="compact" variant="outlined"><v-btn value="count">Count</v-btn><v-btn value="percent">% of Shipments</v-btn></v-btn-toggle>
         <div class="bar-chart"><div v-for="point in trendData" :key="point.label" class="bar-group"><div class="stacked-bars"><span class="bar late" :style="{ height: barHeight(point.late) }" /><span class="bar docs" :style="{ height: barHeight(point.docs) }" /><span class="bar invoice" :style="{ height: barHeight(point.invoice) }" /></div><label>{{ point.label }}</label></div></div>
         <div class="legend-row"><span><i class="dot late" />Late Delivery</span><span><i class="dot docs" />Missing Documentation</span><span><i class="dot invoice" />Invoice Discrepancy</span></div>
-      </div>
+      </v-card>
     </section>
 
     <section class="secondary-grid">
-      <div class="panel volume-panel"><div class="panel-header"><h2>Shipment Volume</h2><span class="panel-tag">{{ durationLabel }}</span></div><svg viewBox="0 0 360 140" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span></div></div>
-      <div class="panel regional-panel"><div class="panel-header"><h2>Regional Performance</h2><span class="panel-tag">Worst first</span></div><div class="regional-grid"><div v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)"><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></div></div></div>
+      <v-card class="panel volume-panel" elevation="0"><v-card-title class="panel-header"><h2>Shipment Volume</h2><v-chip class="panel-tag" size="small">{{ durationLabel }}</v-chip></v-card-title><v-card-text><svg viewBox="0 0 360 140" class="volume-chart" aria-label="Shipment volume chart" role="img"><path :d="volumePaths.total" class="volume-line total" /><path :d="volumePaths.onTime" class="volume-line ontime" /></svg><div class="chart-legend"><span><i class="line-swatch total" />Total Shipments</span><span><i class="line-swatch ontime" />On-Time Shipments</span></div></v-card-text></v-card>
+      <v-card class="panel regional-panel" elevation="0"><v-card-title class="panel-header"><h2>Regional Performance</h2><v-chip class="panel-tag" size="small">Worst first</v-chip></v-card-title><v-card-text><div class="regional-grid"><v-sheet v-for="region in regionalSummary" :key="region.region" class="region-card" :class="getStatusTone(region.onTimeRate)" border><div class="region-name">{{ region.region }}</div><div class="region-stat">{{ region.shipments.toLocaleString() }} shipments</div><div class="region-rate" :class="getStatusTone(region.onTimeRate)">{{ formatPercent(region.onTimeRate) }}</div><div class="region-open">{{ region.openExceptions }} open exceptions</div></v-sheet></div></v-card-text></v-card>
     </section>
 
-    <section class="panel exceptions-panel"><div class="panel-header compact-header"><h2>Open Exceptions</h2><div class="inline-filters"><select v-model="exceptionType" aria-label="Exception type filter"><option value="all">All Types</option><option v-for="type in exceptionTypes" :key="type">{{ type }}</option></select><select v-model="exceptionCarrier" aria-label="Exception carrier filter"><option value="all">All Carriers</option><option v-for="carrier in carriers" :key="carrier.id" :value="carrier.id">{{ carrier.name }}</option></select></div></div>
-      <table><thead><tr><th v-for="column in exceptionColumns" :key="column.key"><button class="sort-button" type="button" @click="toggleExceptionSort(column.key)">{{ column.label }} {{ sortIndicator(exceptionSort, column.key) }}</button></th></tr></thead><tbody><tr v-for="exception in sortedExceptions" :key="exception.id"><td>{{ exception.id }}</td><td>{{ exception.type }}</td><td>{{ exception.carrier_name }}</td><td>{{ exception.route }}</td><td>{{ exception.shipment_id }}</td><td>{{ formatDate(exception.date_opened) }}</td><td><span :class="{ 'danger-days': exception.daysOpen > 5 }">{{ exception.daysOpen }}</span></td><td><span class="status-pill" :class="exception.status === 'Open' ? 'open' : 'review'">{{ exception.status }}</span></td></tr><tr v-if="!sortedExceptions.length"><td colspan="8" class="empty-state">No open exceptions match the selected filters.</td></tr></tbody></table>
-    </section>
+    <v-card class="panel exceptions-panel" elevation="0"><v-card-title class="panel-header compact-header"><h2>Open Exceptions</h2><div class="inline-filters"><v-select v-model="exceptionType" :items="exceptionTypeOptions" aria-label="Exception type filter" density="compact" hide-details label="Type" variant="outlined" /><v-select v-model="exceptionCarrier" :items="carrierOptions" aria-label="Exception carrier filter" density="compact" hide-details label="Carrier" variant="outlined" /></div></v-card-title>
+      <v-table density="compact"><thead><tr><th v-for="column in exceptionColumns" :key="column.key"><v-btn class="sort-button" size="x-small" variant="text" @click="toggleExceptionSort(column.key)">{{ column.label }}<v-icon :icon="sortIcon(exceptionSort, column.key)" size="14" /></v-btn></th></tr></thead><tbody><tr v-for="exception in sortedExceptions" :key="exception.id"><td>{{ exception.id }}</td><td>{{ exception.type }}</td><td>{{ exception.carrier_name }}</td><td>{{ exception.route }}</td><td>{{ exception.shipment_id }}</td><td>{{ formatDate(exception.date_opened) }}</td><td><span :class="{ 'danger-days': exception.daysOpen > 5 }">{{ exception.daysOpen }}</span></td><td><v-chip :color="exception.status === 'Open' ? 'success' : 'warning'" size="x-small" variant="tonal">{{ exception.status }}</v-chip></td></tr><tr v-if="!sortedExceptions.length"><td colspan="8" class="empty-state">No open exceptions match the selected filters.</td></tr></tbody></v-table>
+    </v-card>
   </main>
 </template>
 
@@ -49,6 +49,10 @@ const filters = reactive<FilterState>({ dateRange: '30', region: 'all', carrier:
 const dateRanges = [{ label: 'Last 7 days', value: '7' }, { label: 'Last 30 days', value: '30' }, { label: 'Last 90 days', value: '90' }]
 const regions = ['Northeast', 'Southeast', 'Midwest', 'West', 'Southwest']
 const exceptionTypes = ['Late Delivery', 'Missing Documentation', 'Invoice Discrepancy']
+const regionOptions = [{ title: 'All Regions', value: 'all' }, ...regions.map((region) => ({ title: region, value: region }))]
+const carrierOptions = [{ title: 'All Carriers', value: 'all' }, ...carriers.map((carrier) => ({ title: carrier.name, value: carrier.id }))]
+const statusOptions = [{ title: 'All Shipment Statuses', value: 'all' }, { title: 'In Transit', value: 'In Transit' }, { title: 'Delivered', value: 'Delivered' }, { title: 'Delayed', value: 'Delayed' }]
+const exceptionTypeOptions = [{ title: 'All Types', value: 'all' }, ...exceptionTypes.map((type) => ({ title: type, value: type }))]
 const trendView = ref<'type' | 'carrier'>('type')
 const trendMetric = ref<'count' | 'percent'>('count')
 const exceptionType = ref('all')
@@ -85,7 +89,7 @@ const volumePaths = computed(() => {
 function compare(left: object, right: object, key: string, direction: 'asc' | 'desc') { const result = typeof Reflect.get(left, key) === 'number' && typeof Reflect.get(right, key) === 'number' ? Number(Reflect.get(left, key)) - Number(Reflect.get(right, key)) : String(Reflect.get(left, key)).localeCompare(String(Reflect.get(right, key))); return direction === 'asc' ? result : -result }
 function toggleScoreSort(key: string) { scoreSort.direction = scoreSort.key === key && scoreSort.direction === 'desc' ? 'asc' : 'desc'; scoreSort.key = key }
 function toggleExceptionSort(key: string) { exceptionSort.direction = exceptionSort.key === key && exceptionSort.direction === 'desc' ? 'asc' : 'desc'; exceptionSort.key = key }
-function sortIndicator(sort: { key: string; direction: string }, key: string) { return sort.key !== key ? '↕' : sort.direction === 'asc' ? '↑' : '↓' }
+function sortIcon(sort: { key: string; direction: string }, key: string) { return sort.key !== key ? 'mdi-swap-vertical' : sort.direction === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down' }
 function getExceptionTone(value: number) { return value <= 10 ? 'good' : value <= 20 ? 'warn' : 'bad' }
 function getScoreTone(value: number) { return value >= 90 ? 'excellent' : value >= 70 ? 'good' : 'alert' }
 function formatDate(value: string) { return new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(value)) }
