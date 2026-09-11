@@ -1,6 +1,6 @@
 <template>
   <main class="page-shell">
-    <v-toolbar class="topbar" density="comfortable" elevation="0">
+    <v-app-bar class="topbar" color="#0F2D4A" density="comfortable" elevation="0" position="static" theme="dark">
       <div class="brand-block"><v-avatar class="brand-mark" size="42">FF</v-avatar><div><div class="eyebrow">FastForward Logistics</div><h1>Ops Dashboard</h1></div></div>
       <div class="filter-row">
         <div class="header-duration" role="group" aria-label="Dashboard date range">
@@ -10,7 +10,16 @@
         <v-select v-model="filters.carrier" :items="carrierOptions" aria-label="Carrier filter" class="header-select carrier-select" density="compact" hide-details variant="solo-filled" />
         <v-select v-model="filters.status" :items="statusOptions" aria-label="Shipment status filter" class="header-select" density="compact" hide-details variant="solo-filled" />
       </div>
-    </v-toolbar>
+      <v-menu location="bottom end" offset="8">
+        <template #activator="{ props }">
+          <v-btn v-bind="props" class="ml-auto user-menu-button" rounded="pill" variant="text">
+            <v-avatar color="#F5A623" size="36"><span class="text-subtitle-2 font-weight-bold text-white">JD</span></v-avatar>
+            <span class="d-flex flex-column align-start user-menu-details"><span class="text-body-2 font-weight-medium text-white">Jordan Davis</span><span class="text-caption" style="color: rgba(255,255,255,0.5)">VP of Operations</span></span>
+          </v-btn>
+        </template>
+        <v-list min-width="180"><v-list-item prepend-icon="mdi-account-outline" title="My Profile" /><v-divider /><v-list-item color="error" prepend-icon="mdi-logout" title="Sign Out" /></v-list>
+      </v-menu>
+    </v-app-bar>
 
     <section class="summary-grid">
       <v-card v-for="card in summaryCards" :key="card.label" class="summary-card" elevation="0"><v-card-text><div class="card-label">{{ card.label }}</div><div class="card-value" :class="card.tone">{{ card.value }}</div><div class="card-trend" :class="card.trend >= 0 ? 'positive' : 'negative'"><v-icon :icon="card.trend >= 0 ? 'mdi-trending-up' : 'mdi-trending-down'" size="15" />{{ Math.abs(card.trend).toFixed(1) }}% vs prior period</div></v-card-text></v-card>

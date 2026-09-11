@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app class="dashboard-app">
     <RouterView />
   </v-app>
 </template>

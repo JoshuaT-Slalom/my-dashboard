@@ -38,6 +38,10 @@ button {
   min-height: 100vh;
 }
 
+.dashboard-app {
+  background: #eaf1f8 !important;
+}
+
 h1,
 h2,
 p {
@@ -61,7 +65,12 @@ p {
   margin-bottom: 16px;
 }
 
-.topbar .v-toolbar__content {
+.topbar.v-app-bar {
+  background: #0f2d4a !important;
+}
+
+.topbar .v-toolbar__content,
+.topbar .v-app-bar__content {
   min-height: 82px;
   height: auto;
   justify-content: space-between;
@@ -103,18 +112,38 @@ p {
 .filter-row {
   display: flex;
   align-items: center;
+  flex: 1 1 0;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
   margin-left: auto;
+  min-width: 0;
+}
+
+.user-menu-button {
+  flex: 0 0 auto;
+  height: 52px;
+  margin-left: 12px;
+  min-width: 0;
+  padding: 0 8px;
+  text-transform: none;
+}
+
+.user-menu-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.user-menu-details {
+  line-height: 1.25;
+  margin-left: 8px;
 }
 
 .header-select {
-  width: 156px;
+  width: 132px;
 }
 
 .carrier-select {
-  width: 210px;
+  width: 172px;
 }
 
 .header-select .v-field {
@@ -133,7 +162,7 @@ p {
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  margin-right: 18px;
+  margin-right: 8px;
 }
 
 .header-duration .duration-chip {
