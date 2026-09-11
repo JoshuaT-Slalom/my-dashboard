@@ -73,6 +73,20 @@ export function filterShipments(shipments: Shipment[], filters: FilterState) {
   })
 }
 
+export function filterExceptions(exceptions: DashboardException[], shipments: Shipment[], filters: FilterState) {
+  const days = Number(filters.dateRange || 30)
+  const { start, end } = getDateWindow(days)
+
+  return exceptions.filter((exception) => {
+    const opened = new Date(exception.date_opened)
+    const shipment = shipments.find((entry) => entry.id === exception.shipment_id)
+    if (!shipment || opened < start || opened > end) return false
+    if (filters.region && filters.region !== 'all' && shipment.region !== filters.region) return false
+    if (filters.carrier && filters.carrier !== 'all' && exception.carrier_id !== filters.carrier) return false
+    return true
+  })
+}
+
 export function getTrendDelta(current: number, previous: number) {
   if (!previous || previous === 0) return 0
   return Number((((current - previous) / previous) * 100).toFixed(1))
@@ -80,7 +94,7 @@ export function getTrendDelta(current: number, previous: number) {
 
 export function getSummaryMetrics(shipments: Shipment[], exceptions: DashboardException[], filters: FilterState): SummaryMetrics {
   const activeShipments = filterShipments(shipments, filters)
-  const openExceptions = exceptions.filter((exception) => exception.status !== 'Resolved')
+  const openExceptions = filterExceptions(exceptions, shipments, filters).filter((exception) => exception.status !== 'Resolved')
   const totalShipments = activeShipments.length
 
   const onTimeCount = activeShipments.filter((shipment) => {
@@ -124,6 +138,7 @@ export function getSummaryMetrics(shipments: Shipment[], exceptions: DashboardEx
 
 export function getCarrierScorecard(shipments: Shipment[], exceptions: DashboardException[], filters: FilterState) {
   const relevantShipments = filterShipments(shipments, filters)
+  const relevantExceptions = filterExceptions(exceptions, shipments, filters)
 
   return carriers
     .map((carrier) => {
@@ -135,7 +150,7 @@ export function getCarrierScorecard(shipments: Shipment[], exceptions: Dashboard
       }).length
       const onTimeRate = (onTimeCount / total) * 100
 
-      const carrierExceptions = exceptions.filter(
+      const carrierExceptions = relevantExceptions.filter(
         (exception) => exception.carrier_id === carrier.id && exception.status !== 'Resolved',
       )
       const exceptionRate = (carrierExceptions.length / total) * 100
@@ -177,11 +192,7 @@ export function getExceptionTrendData(shipments: Shipment[], exceptions: Dashboa
   }))
 
   const relevantShipments = filterShipments(shipments, filters)
-  const exceptionBuckets = exceptions.filter((exception) => {
-    const opened = new Date(exception.date_opened)
-    const { start, end } = getDateWindow(days)
-    return opened >= start && opened <= end
-  })
+  const exceptionBuckets = filterExceptions(exceptions, shipments, filters)
 
   if (view === 'carrier') {
     return carriers.map((carrier) => {
@@ -225,6 +236,7 @@ export function getExceptionTrendData(shipments: Shipment[], exceptions: Dashboa
 
 export function getRegionalSummary(shipments: Shipment[], exceptions: DashboardException[], filters: FilterState) {
   const relevantShipments = filterShipments(shipments, filters)
+  const relevantExceptions = filterExceptions(exceptions, shipments, filters)
   const regionNames = ['Northeast', 'Southeast', 'Midwest', 'West', 'Southwest']
 
   const regions = regionNames.map((region) => {
@@ -235,7 +247,7 @@ export function getRegionalSummary(shipments: Shipment[], exceptions: DashboardE
     }).length
     const count = matches.length
     const rate = count ? (onTime / count) * 100 : 0
-    const openExceptions = exceptions.filter(
+    const openExceptions = relevantExceptions.filter(
       (exception) => exception.status !== 'Resolved' && matches.some((shipment) => shipment.carrier_id === exception.carrier_id),
     ).length
 
@@ -253,7 +265,7 @@ export function getRegionalSummary(shipments: Shipment[], exceptions: DashboardE
 export function getOpenExceptions(shipments: Shipment[], exceptions: DashboardException[], filters: FilterState) {
   const relevantShipments = filterShipments(shipments, filters)
 
-  return exceptions
+  return filterExceptions(exceptions, shipments, filters)
     .filter((exception) => exception.status !== 'Resolved')
     .map((exception) => {
       const shipment = relevantShipments.find((entry) => entry.id === exception.shipment_id) || shipments.find((entry) => entry.id === exception.shipment_id)
@@ -268,11 +280,6 @@ export function getOpenExceptions(shipments: Shipment[], exceptions: DashboardEx
         daysOpen,
       }
     })
-    .filter((exception) => {
-      if (!exception.shipment) return false
-      if (filters.region && filters.region !== 'all' && exception.shipment.region !== filters.region) return false
-      if (filters.carrier && filters.carrier !== 'all' && exception.shipment.carrier_id !== filters.carrier) return false
-      return true
-    })
+    .filter((exception) => exception.shipment)
     .sort((a, b) => b.daysOpen - a.daysOpen)
 }
