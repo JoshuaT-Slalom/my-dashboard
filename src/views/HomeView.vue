@@ -5,7 +5,7 @@
       <v-menu location="bottom end" offset="8">
         <template #activator="{ props }">
           <v-btn v-bind="props" class="ml-auto user-menu-button" rounded="pill" variant="text">
-            <v-avatar color="#F5A623" size="36"><span class="text-subtitle-2 font-weight-bold text-white">JD</span></v-avatar>
+            <v-avatar color="#F5A623" size="36"><span class="text-subtitle-2 font-weight-bold text-white">JT</span></v-avatar>
             <span class="d-flex flex-column align-start user-menu-details"><span class="text-body-2 font-weight-medium text-white">Josh Thompson</span><span class="text-caption" style="color: rgba(255,255,255,0.5)">VP of Operations</span></span>
           </v-btn>
         </template>
