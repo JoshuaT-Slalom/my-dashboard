@@ -67,6 +67,7 @@ p {
 
 .topbar.v-app-bar {
   background: #0f2d4a !important;
+  position: relative !important;
 }
 
 .topbar .v-toolbar__content,
